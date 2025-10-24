@@ -21,6 +21,8 @@ The project uses the **LHC Olympics 2020 R&D Dataset**. This is a simulated data
 * **High-Level Features (HLF):** A simple vector of pre-calculated features for each event (e.g., jet mass, $p_T$, $\tau_{21}$).
 * **Low-Level Features (LLF):** The raw constituent particles ($p_T, \eta, \phi$) for each jet, allowing for more complex feature engineering.
 
+> **Note:** The used dataset is made public and can be accessed on Kaggle by the title **LHC Olympics 2020 Anomaly Detection R&D Dataset**
+
 ## 🛠️ Methodology
 
 The core principle for both methods is to train an autoencoder on the background data to learn a compressed representation. The **reconstruction loss** (e.g., MSE) is then used as an anomaly score.
