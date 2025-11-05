@@ -42,7 +42,7 @@ This approach uses the richer, low-level data to perform a more complex analysis
 1.  **Feature Engineering:** The low-level particle constituents are binned into 2D histograms based on their ($\eta, \phi$) coordinates, with pixel intensity weighted by particle $p_T$. This creates a "jet image" for each event, representing the energy deposition in the calorimeter.
 2.  **Model:** A **Convolutional Autoencoder (CAE) with a U-Net architecture** was tried. The U-Net's skip connections are highly effective for image reconstruction tasks, preserving fine-grained spatial details, which is ideal for identifying subtle anomalies in the jet's energy distribution.
 3.  Challenges faced currently involve loss getting stuck to a local minima and weights not updating ( due to high sparsity of images the model takes the easy way out by predicting plain black images which guarantee very low loss )
-4.  to tacke theses challenges ,current implementations involve experimenting with Vision transformers and sparse convolutional autoencoders ( more precicesely - submanifold sparse convolutional autoencoders ) to account for the high sparsity in data. 
+4.  To tacke theses challenges ,current implementations involve experimenting with **Vision transformers** and **sparse convolutional autoencoders** ( more precicesely - **submanifold sparse convolutional autoencoders** ) to account for the high sparsity in data. 
 5.  **Tuning:** The model's complex hyperparameters (e.g., filter count, kernel size, dropout) were also optimized using **Optuna**.
 
 ## 📊 Results & Analysis
