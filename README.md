@@ -73,8 +73,8 @@ The results show that while the simple AE/VAE on high-level features provides a 
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/](https://github.com/)<your-username>/<your-repo-name>.git
-    cd <your-repo-name>
+    git clone https://github.com/AtulChikku/LHC-Olympics-2020-AD.git
+    cd LHC-Olympics-2020-AD
     ```
 
 2.  Install the required packages:
