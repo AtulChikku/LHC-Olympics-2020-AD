@@ -35,13 +35,15 @@ This approach uses a simple, fully-connected neural network architecture to reco
 * **Input:** A 1D vector of the high-level features for each event.
 * **Tuning:** Hyperparameters (e.g., latent dimension, layer size, learning rate) were optimized using **Optuna** to maximize the final anomaly detection performance.
 
-### Approach 2: Convolutional Autoencoders on Jet Images
+### Approach 2: Convolutional Autoencoders on Jet Images (Ongoing)
 
 This approach uses the richer, low-level data to perform a more complex analysis.
 
 1.  **Feature Engineering:** The low-level particle constituents are binned into 2D histograms based on their ($\eta, \phi$) coordinates, with pixel intensity weighted by particle $p_T$. This creates a "jet image" for each event, representing the energy deposition in the calorimeter.
-2.  **Model:** A **Convolutional Autoencoder (CAE) with a U-Net architecture** was used. The U-Net's skip connections are highly effective for image reconstruction tasks, preserving fine-grained spatial details, which is ideal for identifying subtle anomalies in the jet's energy distribution.
-3.  **Tuning:** The model's complex hyperparameters (e.g., filter count, kernel size, dropout) were also optimized using **Optuna**.
+2.  **Model:** A **Convolutional Autoencoder (CAE) with a U-Net architecture** was tried. The U-Net's skip connections are highly effective for image reconstruction tasks, preserving fine-grained spatial details, which is ideal for identifying subtle anomalies in the jet's energy distribution.
+3.  Challenges faced currently involve loss getting stuck to a local minima and weights not updating ( due to high sparsity of images the model takes the easy way out by predicting plain black images which guarantee very low loss )
+4.  to tacke theses challenges ,current implementations involve experimenting with Vision transformers and sparse convolutional autoencoders ( more precicesely - submanifold sparse convolutional autoencoders ) to account for the high sparsity in data. 
+5.  **Tuning:** The model's complex hyperparameters (e.g., filter count, kernel size, dropout) were also optimized using **Optuna**.
 
 ## 📊 Results & Analysis
 
@@ -50,9 +52,9 @@ The models were evaluated on their ability to distinguish the hidden signal even
 | Method                                | Anomaly Score         | Max AUC (Tuned) |
 | :------------------------------------ | :-------------------- | :-------------- |
 | **AE / VAE (High-Level Features)** | Vector MSE Loss       | **0.80** |
-| **U-Net CAE (Jet Images)** | Pixel-wise MSE Loss   | **0.92** |
+| **(Jet Images)** | Pixel-wise MSE Loss   | **yet to be done** |
 
-The results show that while the simple AE/VAE on high-level features provides a strong baseline, the convolutional model operating on jet images achieves significantly better performance. This indicates that the low-level particle data contains granular information crucial for anomaly detection, which is successfully exploited by the convolutional architecture.
+The results show that while the simple AE/VAE on high-level features provides a strong baseline, the convolutional model operating on jet images are expected to achieve significantly better performance. This would indicate that the low-level particle data contains granular information crucial for anomaly detection, which is successfully exploited by the convolutional architecture.
 
 ![Example ROC Curves](results/figures/roc_curves.png)
 *(Note: Replace with the actual path to your saved plot in the repository.)*
