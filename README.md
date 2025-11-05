@@ -81,27 +81,3 @@ The results show that while the simple AE/VAE on high-level features provides a 
     ```bash
     pip install -r requirements.txt
     ```
-
-### Running the Code
-
-1.  **Data Analysis & Exploration:**
-    See the notebooks in the `/notebooks` directory for data loading, preprocessing, and results analysis.
-    ```bash
-    jupyter notebook notebooks/01_data_exploration.ipynb
-    ```
-
-2.  **Train Models:**
-    Use the main training scripts in the `/src` directory.
-    ```bash
-    # Train the VAE on High-Level Features
-    python src/train.py --model vae --data hlf
-
-    # Train the U-Net on Jet Images
-    python src/train.py --model unet --data llf
-    ```
-
-3.  **Hyperparameter Tuning:**
-    To run an Optuna optimization study:
-    ```bash
-    python src/tune.py --model unet
-    ```
