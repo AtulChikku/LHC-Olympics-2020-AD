@@ -1,83 +1,62 @@
-# Unsupervised Anomaly Detection on the LHC Olympics 2020 Dataset
+# Enhanced Resonant Anomaly Detection on the LHC Olympics 2020 Dataset
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This project explores and compares two deep learning methods for unsupervised anomaly detection in high energy physics, using the LHC Olympics 2020 R&D Dataset. The goal is to identify anomalous "signal" events (indicative of new physics) from a large "background" of known Standard Model processes.
+In this project, I present an **optimized implementation of the ANODE (Anomaly Detection with Normalizing Flows) framework**, introducing specific refinements in numerical stability and regularization to detect new physics as localized over-densities in the di-jet invariant mass spectrum ($m_{jj}$).
 
-## 🎯 Motivation & Goal
+## 🚀 The Challenge & My Approach
 
-At the Large Hadron Collider (LHC), searches for new physics often involve looking for rare, exotic events (anomalies) hidden within an overwhelming amount of background data. Since the signature of new physics is unknown, we cannot use traditional supervised classification.
+The standard ANODE method identifies "bumps" by comparing density estimates $p(x|m)$ in signal and control regions. However, I found that high-dimensional feature spaces ($D=134$) often lead to **density collapse** and **numerical instability** in vanilla implementations.
 
-This project implements **unsupervised anomaly detection** by training models *only* on known background data. Anomalies are then identified as data points that the models find difficult to reconstruct.
+### ✨ Key Innovations in this Implementation
 
-We compare two distinct approaches:
-1.  **A Feature-Based Approach:** Using Autoencoders (AEs) and Variational Autoencoders (VAEs) on high-level kinematic features.
-2.  **An Image-Based Approach:** Constructing "jet images" from low-level particle data and using a U-Net-based Convolutional Autoencoder for reconstruction.
+While utilizing the ANODE core architecture, I introduced several critical improvements to enhance performance and stability:
 
-## 💾 Dataset
+* **Robust Density Ensembling**: I implemented a **Log-Sum-Exp averaged ensemble** over the final 10 training epochs. This effectively blurs transient density spikes caused by overfitting while reinforcing the persistent physical resonance.
+* **Averaged Log-Likelihood Ratio (ALR)**: I use the log-ratio $R(\mathbf{x}|m) = \log \text{avg}[p_{data}] - \log \text{avg}[p_{bg}]$ for anomaly scoring. This ensures numerical stability and prevents the "SIC explosions" common in raw probability ratios.
+* **Optimized Regularization Balance**: I identified that Spectral Normalization was too restrictive for anomaly detection. I replaced it with a tuned **Weight Decay ($10^{-6}$)** strategy to maintain the "sharpness" required to detect narrow resonances without triggering model collapse.
+* **Constituent-Based Global Representations**: I transitioned from sparse 2D "jet images" to **kT-ordered, centered sequences** to preserve the hard-parton substructure of the jet.
 
-The project uses the **LHC Olympics 2020 R&D Dataset**. This is a simulated dataset containing a large "background" set (Standard Model di-jets) and several hidden "signal" sets for evaluation. The data is provided in two forms:
 
-* **High-Level Features (HLF):** A simple vector of pre-calculated features for each event (e.g., jet mass, $p_T$, $\tau_{21}$).
-* **Low-Level Features (LLF):** The raw constituent particles ($p_T, \eta, \phi$) for each jet, allowing for more complex feature engineering.
 
-> **Note:** The used dataset is made public and can be accessed on Kaggle by the title **LHC Olympics 2020 Anomaly Detection R&D Dataset**
+## 💡 Architectural Evolution: My Journey to Density Manifolds
 
-## 🛠️ Methodology
+This project was an iterative journey through four distinct phases of representation learning as I worked to overcome the unique challenges of particle physics data.
 
-The core principle for both methods is to train an autoencoder on the background data to learn a compressed representation. The **reconstruction loss** (e.g., MSE) is then used as an anomaly score.
+#### Phase 1: The Sparsity Crisis (Image-Based VAEs/ViTs)
+* **My Strategy**: Initially, I treated jets as 2D energy depositions ($\eta, \phi$ grids) using **U-Nets** or **Vision Transformers** for reconstruction.
+* **The Failure**: I discovered that jet images were over 95% sparse. My models suffered from "posterior collapse," where they learned to "cheat" by simply predicting blank black images to achieve a low MSE loss without learning any actual substructure.
 
-### Approach 1: Autoencoders on High-Level Features
+#### Phase 2: Solving Sparsity with Submanifold Sparse Convolutions (SSCN)
+* **My Strategy**: To solve the sparsity issue, I implemented **Submanifold Sparse Convolutions** to focus computation only on active pixels.
+* **The Breakthrough**: This worked significantly better; I was able to reconstruct detailed jet images with high fidelity.
+* **The Limitation**: However, I found that the reconstruction error alone was not a strong discriminator. My background-trained model became "too good" at reconstruction, meaning the distinction between background and signal was not evident from the error alone.
 
-This approach uses a simple, fully-connected neural network architecture to reconstruct the provided high-level features.
+#### Phase 3: Hybrid Sequence Modeling (SSCN Features)
+* **My Strategy**: Instead of raw features, I moved to sequence modeling using the latent features learned from my sparse convolutions.
+* **The Result**: This provided slightly better results than raw features alone, as the features were more physically representative.
+* **The Dead End**: I realized I was still limited by the **Reconstruction Paradigm**. Reconstruction loss is designed to find outliers, but resonant signals are often **over-densities** rather than structural outliers.
 
-* **Models:** Standard Autoencoder (AE) and Variational Autoencoder (VAE).
-* **Input:** A 1D vector of the high-level features for each event.
-* **Tuning:** Hyperparameters (e.g., latent dimension, layer size, learning rate) were optimized using **Optuna** to maximize the final anomaly detection performance.
+#### Phase 4: Pivot to Density Estimation (Enhanced ANODE)
+* **My Strategy**: Finally, I abandoned reconstruction in favor of **Explicit Density Estimation** using Masked Autoregressive Flows (MAF).
+* **The Success**: By estimating $p(x)$ directly, I was able to identify the 3.5 TeV resonance as an over-density. I stabilized this by introducing **Log-Sum-Exp averaging**, which brought my SIC scores into a scientifically valid range.
 
-### Approach 2: Convolutional Autoencoders on Jet Images (Ongoing)
 
-This approach uses the richer, low-level data to perform a more complex analysis.
 
-1.  **Feature Engineering:** The low-level particle constituents are binned into 2D histograms based on their ($\eta, \phi$) coordinates, with pixel intensity weighted by particle $p_T$. This creates a "jet image" for each event, representing the energy deposition in the calorimeter.
-2.  **Model:** A **Convolutional Autoencoder (CAE) with a U-Net architecture** was tried. The U-Net's skip connections are highly effective for image reconstruction tasks, preserving fine-grained spatial details, which is ideal for identifying subtle anomalies in the jet's energy distribution.
-3.  Challenges faced currently involve loss getting stuck to a local minima and weights not updating ( due to high sparsity of images the model takes the easy way out by predicting plain black images which guarantee very low loss )
-4.  To tacke theses challenges ,current implementations involve experimenting with **Vision transformers** and **sparse convolutional autoencoders** ( more precicesely - **submanifold sparse convolutional autoencoders** ) to account for the high sparsity in data. 
-5.  **Tuning:** The model's complex hyperparameters (e.g., filter count, kernel size, dropout) were also optimized using **Optuna**.
+## 📈 Results & Analysis
 
-## 📊 Results & Analysis
+| Method | Metric | Result |
+| :--- | :--- | :--- |
+| **Baseline (VAE)** | Max AUC | 0.80 |
+| **My Enhanced ANODE** | **Max AUC** | **0.83** |
+| **My Enhanced ANODE** | **Max SIC** | **5.20** |
 
-The models were evaluated on their ability to distinguish the hidden signal events from the background, quantified by the **Area Under the ROC Curve (AUC)**.
+## 💻 Installation & Usage
 
-| Method                                | Anomaly Score         | Max AUC (Tuned) |
-| :------------------------------------ | :-------------------- | :-------------- |
-| **AE / VAE (High-Level Features)** | Vector MSE Loss       | **0.80** |
-| **(Jet Images)** | Pixel-wise MSE Loss   | **yet to be done** |
+1. **Clone**: `git clone https://github.com/AtulChikku/LHC-Olympics-2020-AD.git`
+2. **Install**: `pip install -r requirements.txt`
+3. **Run**: Detailed training and evaluation scripts are located in the `/scripts` directory.
 
-The results show that while the simple AE/VAE on high-level features provides a strong baseline, the convolutional model operating on jet images are expected to achieve significantly better performance. This would indicate that the low-level particle data contains granular information crucial for anomaly detection, which is successfully exploited by the convolutional architecture.
-
-![Example ROC Curves](results/figures/roc_curves.png)
-*(Note: Replace with the actual path to your saved plot in the repository.)*
-
-## 🚀 How to Use
-
-### Prerequisites
-- Python 3.8+
-- PyTorch
-- NumPy, Pandas, Scikit-learn
-- Matplotlib, Seaborn
-- Optuna
-- (Optional: `awkward-array`, `vector` for HEP data handling)
-
-### Installation
-
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/AtulChikku/LHC-Olympics-2020-AD.git
-    cd LHC-Olympics-2020-AD
-    ```
-
-2.  Install the required packages:
-    ```bash
-    pip install -r requirements.txt
-    ```
+## 📜 References
+* ANODE Paper: [arXiv:2001.04990](https://arxiv.org/abs/2001.04990)
+* LHC Olympics 2020: [arXiv:2101.08320](https://arxiv.org/abs/2101.08320)
