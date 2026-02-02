@@ -1,0 +1,8 @@
+{
+  "n_estimators": 500,
+  "max_depth": 6,
+  "learning_rate": 0.1,
+  "subsample": 0.9,
+  "scale_pos_weight": 10,
+  "auc": 0.85
+}
