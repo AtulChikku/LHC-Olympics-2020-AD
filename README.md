@@ -65,7 +65,6 @@ This project was an iterative journey through five distinct phases as I worked t
 
 | Method | Max AUC | Resonance Detection |
 | :--- | :---: | :---: |
-| **Baseline (VAE)** | 0.80 | ❌ |
 | **Enhanced ANODE (MAF)** | **0.83** | ✅ 3.5 TeV |
 | **Sparse AE + XGBoost** | **0.85** | ✅ 3.5 TeV |
 
