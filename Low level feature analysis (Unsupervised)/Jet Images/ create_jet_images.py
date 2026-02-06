@@ -7,9 +7,7 @@ from tqdm import tqdm
 from pyjet import cluster, DTYPE_PTEPM
 import math
 
-# ==========================================================
-# 1. Configuration and Helpers
-# ==========================================================
+
 N_FEATURES = 3
 N_ETA = 50
 N_PHI = 50
@@ -22,7 +20,7 @@ phi_bins = np.linspace(-MAX_R, MAX_R, N_PHI + 1)
 
 NUM_CPU_WORKERS = mp.cpu_count() - 1 
 MAX_JOBS_QUEUE = 500
-H5_CHUNK_SIZE = 100 # Good balance for initial write performance
+H5_CHUNK_SIZE = 100
 
 # --- MJJ Calculation ---
 def calculate_MJJ(j1, j2):
@@ -33,9 +31,7 @@ def calculate_MJJ(j1, j2):
     M2 = E*E - (px*px + py*py + pz*pz)
     return np.sqrt(max(M2, 0.0))
 
-# ==========================================================
-# 2. Worker Function (Parallelized Task)
-# ==========================================================
+
 def make_dense_jet_image(row):
     """Generates one dense image and MJJ from a raw row of features."""
     n = len(row) // 3
@@ -99,9 +95,7 @@ def _worker_process(index, feats, label):
     dense, MJJ = make_dense_jet_image(feats)
     return index, dense, MJJ, label
 
-# ==========================================================
-# 3. Main Preprocessing Loop (Parallel Execution + Sequential Write)
-# ==========================================================
+
 def preprocess(h5_in_path, out_path):
     print("Opening input file:", h5_in_path)
     
@@ -131,22 +125,17 @@ def preprocess(h5_in_path, out_path):
             # --- Parallel Execution ---
             with ProcessPoolExecutor(max_workers=NUM_CPU_WORKERS) as executor:
                 futures = []
-                
-                # Use tqdm to track progress over ALL events
+           
                 for i in tqdm(range(start_idx, N), initial=start_idx, total=N):
                     
                     row_data = rows[i]
-                    # Separate features and label BEFORE submitting to worker
                     label = int(row_data[-1])
                     feats = row_data[:-1]
                     
                     future = executor.submit(_worker_process, index=i, feats=feats, label=label)
                     futures.append(future)
                     
-                    # --- Sequential Write Block (Triggered by queue size) ---
                     if len(futures) >= MAX_JOBS_QUEUE or i == N - 1:
-                        
-                        # Wait for and retrieve results (runs sequentially in main thread)
                         for future in as_completed(futures):
                             idx, dense, MJJ, label = future.result()
                             
@@ -155,7 +144,6 @@ def preprocess(h5_in_path, out_path):
                                 d_mjj[idx] = MJJ
                                 d_labels[idx] = label 
                             else:
-                                # Mark skipped events with sentinel values
                                 d_mjj[idx] = -1.0
                                 d_labels[idx] = -1 # Use -1 to mark skipped labels
                         
@@ -166,15 +154,12 @@ def preprocess(h5_in_path, out_path):
                         f.attrs["processed_until"] = i
                         f.flush()
 
-                # Final sync
                 f.attrs["processed_until"] = N
                 f.flush()
 
     print("Done. Output saved to:", out_path)
 
-# ==========================================================
-# 4. Execution Block
-# ==========================================================
+
 if __name__ == "__main__":
     
     INPUT_FILE = "/home/asm/LHC-AD/Working files/Low_level_features.h5"

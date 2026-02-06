@@ -48,9 +48,8 @@ class PrecomputedJetDataset(Dataset):
         label  = self.lab[idx]
 
         # Convert to Tensors
-        img = torch.from_numpy(img)                         # [C,H,W] (float32)
-        mjj = torch.as_tensor(mjj, dtype=torch.float32)     # scalar float
-        label = torch.as_tensor(label, dtype=torch.long)        # scalar int64 (for labels)
+        img = torch.from_numpy(img)                         
+        mjj = torch.as_tensor(mjj, dtype=torch.float32)     
+        label = torch.as_tensor(label, dtype=torch.long)        
 
-        # Returns (img, mjj, label)
         return img, mjj, label
